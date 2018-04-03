@@ -60,7 +60,7 @@ class predict(Filter):
     view = [
                  (list, mode_list, str, 'mode', 'mode', '')
             ]
-    para = {'model':load_model('menus/FluidSurface/U-net.h5'),
+    para = {'model':load_model('plugins/434625142~FluidSurface/menus/FluidSurface/U-net.h5'),
             'mode':mode_list[0]
     }
     #一定要预测一次，否则后面会出错
