@@ -100,6 +100,11 @@ class Eliminate(Simple):
             (list, modelist, str, 'mode', 'mode', '')
             ]
     #process
+    def mathc_img(self,image,template,mode):
+        w, h = template.shape[::-1]
+        res = cv2.matchTemplate(image,template,mode)
+        loc = np.where( res ==res.max())
+        return loc[0][0],loc[1][0]
     def run(self, ips, imgs, para = None):
         self.modedict={
         'SQDIFF':cv2.TM_SQDIFF,
@@ -115,10 +120,10 @@ class Eliminate(Simple):
         img_moudle = imgs[0][sly, slx.start+60:slx.stop-60]
         n=len(imgs)
         for i in range(n):
-        	prgs=(i,n)
-        	self.progress(i, len(imgs))
-        	x,y=mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
-	        temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
-	        imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
-	        
+            prgs=(i,n)
+            self.progress(i, len(imgs))
+            x,y=self.mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
+            temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
+            imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
+            
 plgs = [Combine, Dark, '-', DOG, Watershed,'-', Predict,Eliminate]
