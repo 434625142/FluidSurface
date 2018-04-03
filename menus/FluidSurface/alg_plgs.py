@@ -87,5 +87,38 @@ class Predict(Filter):
         line = cv2.dilate(img, np.array([[0,1,0],[1,1,1],[0,1,0]], dtype=np.uint8))
         if para['mode']=='line':img[:] = line -img
         if para['mode']=='line on ori': np.max([snap, line-img], axis=0, out=img)
-
-plgs = [Combine, Dark, '-', DOG, Watershed, Predict]
+class Eliminate(Simple):
+    modelist=['SQDIFF','SQDIFF_NORMED','CCORR','CCORR_NORMED','CCOEFF']
+    title = 'Eliminate vibration'
+    note = ['8-bit', 'req_roi']
+    para = {'amp_x':2,
+            'amp_y':60,
+            'mode':modelist[3]
+            }
+    view = [(int, (0,10), 0, 'amp_x', 'amp_x', ''),
+            (int, (0,80), 0, 'amp_y', 'amp_y', ''),
+            (list, modelist, str, 'mode', 'mode', '')
+            ]
+    #process
+    def run(self, ips, imgs, para = None):
+        self.modedict={
+        'SQDIFF':cv2.TM_SQDIFF,
+        'SQDIFF_NORMED':cv2.TM_SQDIFF_NORMED,
+        'CCORR':cv2.TM_CCORR,
+        'CCORR_NORMED':cv2.TM_CCORR_NORMED,
+        'CCOEFF':cv2.TM_CCOEFF
+        }
+        data = []
+        sly, slx = ips.get_rect()
+        #将矩形中的线进行等分，x是固定的
+        print(sly,slx)
+        img_moudle = imgs[0][sly, slx.start+60:slx.stop-60]
+        n=len(imgs)
+        for i in range(n):
+        	prgs=(i,n)
+        	self.progress(i, len(imgs))
+        	x,y=mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
+	        temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
+	        imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
+	        
+plgs = [Combine, Dark, '-', DOG, Watershed,'-', Predict,Eliminate]
