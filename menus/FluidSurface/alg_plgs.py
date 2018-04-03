@@ -2,7 +2,7 @@ from imagepy.core.engine import Filter, Simple
 from imagepy.ipyalg import watershed
 import numpy as np
 import cv2
-from keras.models import load_model
+
 def combine(img):
     h,w = img.shape
     l, r = img[:,:w//2], img[:,w//2:]
@@ -53,20 +53,26 @@ class Watershed(Filter):
         markers[[0,-1]] = [[1],[2]]
         mark = watershed(img, markers, line=True, conn=1)
         img[:] = (mark==0) * 255
-class predict(Filter):
-    title = 'predict'
-    note = ['8-bit', 'auto_snap', 'not_channel', 'preview']
+class Predict(Filter):
+    title = 'Predict Surface'
+    note = ['8-bit', 'auto_snap',  'preview']
     mode_list=['msk','line','line on ori']
     view = [
                  (list, mode_list, str, 'mode', 'mode', '')
             ]
-    para = {'model':load_model('plugins/434625142~FluidSurface/menus/FluidSurface/U-net.h5'),
-            'mode':mode_list[0]
-    }
-    #一定要预测一次，否则后面会出错
-    print(para['model'].predict(np.zeros((1, 224,224,1))))
+    para = {'mode':mode_list[0]}
+    def load(self, ips):
+        from keras.models import load_model
+        try:
+            self.model=load_model('plugins/434625142~FluidSurface/menus/FluidSurface/U-net.h5')
+        except Exception as e:
+            IPy.alert('Not Found Net')
+            return False
+        #一定要预测一次，否则后面会出错        
+        print(self.model.predict(np.zeros((1, 224,224,1))))       
+        return True 
     def run(self, ips, snap, img, para = None,):
-        img[:]=self.my_predict(img,para['model'],para)
+        img[:]=self.my_predict(snap,self.model,para)
     def my_predict(self,img,model,para):
         shape_temp=img.shape
         img_temp=img.copy()
@@ -83,5 +89,4 @@ class predict(Filter):
         elif para['mode']=='line on ori':       
             img_temp[line>0]=255
             return img_temp
-
-plgs = [Combine, Dark, '-', DOG, Watershed,'-',predict]
+plgs = [Combine, Dark, '-', DOG, Watershed,'-',Predict]
