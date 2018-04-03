@@ -2,11 +2,12 @@ from imagepy.core.util import fileio
 from imagepy.core.engine import Free, Simple
 from imagepy import IPy
 from scipy.misc import imread, imsave
+from imagepy.core.manager import ReaderManager, WriterManager
 import cv2, wx, os
 import numpy as np
 
-fileio.add_reader(['tif'], lambda p:cv2.imread(p, False))
-fileio.add_writer(['tif'], cv2.imwrite)
+ReaderManager.add('tif', lambda p:cv2.imread(p, False))
+WriterManager.add('tif', cv2.imwrite)
 
 class OpenFile(fileio.Reader):
 	title = 'TIF Open'

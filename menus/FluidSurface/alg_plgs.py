@@ -1,5 +1,7 @@
 from imagepy.core.engine import Filter, Simple
 from imagepy.ipyalg import watershed
+from imagepy import IPy
+import os.path as osp
 import numpy as np
 import cv2
 
@@ -53,40 +55,37 @@ class Watershed(Filter):
         markers[[0,-1]] = [[1],[2]]
         mark = watershed(img, markers, line=True, conn=1)
         img[:] = (mark==0) * 255
+
 class Predict(Filter):
+    model = None
     title = 'Predict Surface'
     note = ['8-bit', 'auto_snap',  'preview']
     mode_list=['msk','line','line on ori']
-    view = [
-                 (list, mode_list, str, 'mode', 'mode', '')
-            ]
+    view = [(list, mode_list, str, 'mode', 'mode', '')]
     para = {'mode':mode_list[0]}
+
     def load(self, ips):
+        if not Predict.model is None: return True
         from keras.models import load_model
         try:
-            self.model=load_model('plugins/434625142~FluidSurface/menus/FluidSurface/U-net.h5')
+            path = osp.join(osp.abspath(osp.dirname(__file__)), 'U-net.h5')
+            Predict.model=load_model(path)
         except Exception as e:
             IPy.alert('Not Found Net')
             return False
         #一定要预测一次，否则后面会出错        
-        print(self.model.predict(np.zeros((1, 224,224,1))))       
+        Predict.model.predict(np.zeros((1, 224,224,1)))     
         return True 
-    def run(self, ips, snap, img, para = None,):
-        img[:]=self.my_predict(snap,self.model,para)
-    def my_predict(self,img,model,para):
-        shape_temp=img.shape
-        img_temp=img.copy()
-        img=cv2.resize(img,(224,224)).reshape(1,224,224,1).astype('float32')/255.0
-        pred=(model.predict(img[:,:,:,])*255).astype('uint8').reshape(224,224)
-        img=cv2.resize(pred,(shape_temp[1],shape_temp[0]))
-        ret,thresh1 = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
-        if para['mode']=='msk':return thresh1 
-        uint8_x = cv2.convertScaleAbs(cv2.Sobel(thresh1,cv2.CV_16S,1,0))
-        uint8_y = cv2.convertScaleAbs(cv2.Sobel(thresh1,cv2.CV_16S,0,1))
-        sobel_img = cv2.addWeighted(uint8_x,0.5,uint8_y,0.5,0)
-        ret,line = cv2.threshold(sobel_img,127,255,cv2.THRESH_BINARY)
-        if para['mode']=='line':return line 
-        elif para['mode']=='line on ori':       
-            img_temp[line>0]=255
-            return img_temp
-plgs = [Combine, Dark, '-', DOG, Watershed,'-',Predict]
+
+    def run(self, ips, snap, img, para = None):
+        shape_temp=snap.shape
+        temp=cv2.resize(snap,(224,224)).reshape(1,224,224,1).astype('float32')/255.0
+        pred=(Predict.model.predict(temp)*255).astype('uint8').reshape(224,224)
+        img[:]=(cv2.resize(pred,(shape_temp[1],shape_temp[0]))>127)*255
+        
+        if para['mode']=='msk':return
+        line = cv2.dilate(img, np.array([[0,1,0],[1,1,1],[0,1,0]], dtype=np.uint8))
+        if para['mode']=='line':img[:] = line -img
+        if para['mode']=='line on ori': np.max([snap, line-img], axis=0, out=img)
+
+plgs = [Combine, Dark, '-', DOG, Watershed, Predict]
