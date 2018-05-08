@@ -87,6 +87,7 @@ class Predict(Filter):
         line = cv2.dilate(img, np.array([[0,1,0],[1,1,1],[0,1,0]], dtype=np.uint8))
         if para['mode']=='line':img[:] = line -img
         if para['mode']=='line on ori': np.max([snap, line-img], axis=0, out=img)
+
 class Eliminate(Simple):
     modelist=['SQDIFF','SQDIFF_NORMED','CCORR','CCORR_NORMED','CCOEFF']
     title = 'Eliminate vibration'
@@ -105,6 +106,7 @@ class Eliminate(Simple):
         res = cv2.matchTemplate(image,template,mode)
         loc = np.where( res ==res.max())
         return loc[0][0],loc[1][0]
+
     def run(self, ips, imgs, para = None):
         self.modedict={
         'SQDIFF':cv2.TM_SQDIFF,
@@ -117,13 +119,18 @@ class Eliminate(Simple):
         sly, slx = ips.get_rect()
         #将矩形中的线进行等分，x是固定的
         print(sly,slx)
-        img_moudle = imgs[0][sly, slx.start+60:slx.stop-60]
+        img_moudle =  ips.img[sly, slx.start+60:slx.stop-60]
         n=len(imgs)
+        locs = []
         for i in range(n):
+            #如果平均灰度小于30，则认为没开灯，不处理
+            if np.mean(imgs[i])<30:continue
             prgs=(i,n)
             self.progress(i, len(imgs))
             x,y=self.mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
             temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
             imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
+            locs.append([x, y])
+        IPy.table('locations', locs, ['X','Y'])
             
 plgs = [Combine, Dark, '-', DOG, Watershed,'-', Predict,Eliminate]
