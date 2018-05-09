@@ -124,13 +124,18 @@ class Eliminate(Simple):
         locs = []
         for i in range(n):
             #如果平均灰度小于30，则认为没开灯，不处理
-            if np.mean(imgs[i])<30:continue
+            if np.mean(imgs[i])<30:
+                locs.append([-1, -1])
+                continue
             prgs=(i,n)
             self.progress(i, len(imgs))
             x,y=self.mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
             temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
             imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
             locs.append([x, y])
+        locs_len=len(locs)
+        for i in range(locs_len):
+            if locs[locs_len-i-1]==[-1,-1]:locs[locs_len-i-1]=locs[locs_len-i]
         IPy.table('locations', locs, ['X','Y'])
             
 plgs = [Combine, Dark, '-', DOG, Watershed,'-', Predict,Eliminate]
