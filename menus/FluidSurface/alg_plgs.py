@@ -3,6 +3,7 @@ from imagepy.ipyalg import watershed
 from imagepy import IPy
 import os.path as osp
 import numpy as np
+import scipy.ndimage as ndimg
 import cv2
 
 def combine(img):
@@ -44,6 +45,13 @@ class DOG(Filter):
         msk = img<snap
         img-=snap
         img[msk] = 0
+
+class Gradient(Filter):
+    title = 'Gradient From Bottom'
+    note = ['all', '2int', 'auto_msk', 'auto_snap']
+    #process
+    def run(self, ips, snap, img, para = None):
+        img[:] =  np.clip(ndimg.sobel(snap, axis=0, output=img.dtype), 0, 1e4)
 
 class Watershed(Filter):
     title = 'Watershed Surface'
@@ -119,23 +127,16 @@ class Eliminate(Simple):
         sly, slx = ips.get_rect()
         #将矩形中的线进行等分，x是固定的
         print(sly,slx)
-        img_moudle =  ips.img[sly, slx.start+60:slx.stop-60]
+        img_moudle = imgs[0][sly, slx.start+60:slx.stop-60]
         n=len(imgs)
         locs = []
         for i in range(n):
-            #如果平均灰度小于30，则认为没开灯，不处理
-            if np.mean(imgs[i])<30:
-                locs.append([-1, -1])
-                continue
             prgs=(i,n)
             self.progress(i, len(imgs))
             x,y=self.mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
             temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
             imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
             locs.append([x, y])
-        locs_len=len(locs)
-        for i in range(locs_len):
-            if locs[locs_len-i-1]==[-1,-1]:locs[locs_len-i-1]=locs[locs_len-i]
         IPy.table('locations', locs, ['X','Y'])
             
-plgs = [Combine, Dark, '-', DOG, Watershed,'-', Predict,Eliminate]
+plgs = [Combine, Dark, '-', Gradient, DOG, Watershed,'-', Predict,Eliminate]
