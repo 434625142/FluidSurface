@@ -3,7 +3,7 @@ import numpy as np
 from imagepy.core.engine import Simple, Filter
 from imagepy.core.draw.paint import Paint
 import cv2
-
+import pandas as pd
 class Mark:
     def __init__(self, xs, data):
         self.xs, self.data = xs, data
@@ -22,7 +22,7 @@ class Surface(Simple):
     title = 'Find Surface'
     note = ['8-bit', 'req_roi']
     para = {'num':10}
-    view = [(int, (3,30), 0, 'count', 'num', '')]
+    view = [(int, 'num', (3,30), 0, 'count', '')]
 
     #process
     def run(self, ips, imgs, para = None):
@@ -37,13 +37,14 @@ class Surface(Simple):
         ips.mark = Mark(xs, data)
         k,unit = ips.unit
         data = (np.array(data)*k).round(3)
-        IPy.table(ips.title+'-pts', data, ['%.3f'%i for i in xs*k])
+        # IPy.table(ips.title+'-pts', data, ['%.3f'%i for i in xs*k])
+        IPy.show_table(pd.DataFrame(data, columns=['%.3f'%i for i in xs*k]), ips.title+'-pts')
 
 class DrawMark(Filter):
     title = 'Mark Surface'
     note = ['8-bit', 'req_roi']
     para = {'num':10}
-    view = [(int, (3,30), 0, 'count', 'num', '')]
+    view = [(int, 'num', (3,30), 0, 'count', '')]
 
     #process
     def run(self, ips, snap, img, para = None):

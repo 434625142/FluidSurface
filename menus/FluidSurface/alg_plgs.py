@@ -5,7 +5,7 @@ import os.path as osp
 import numpy as np
 import scipy.ndimage as ndimg
 import cv2
-
+import pandas as pd
 def combine(img):
     h,w = img.shape
     l, r = img[:,:w//2], img[:,w//2:]
@@ -36,7 +36,7 @@ class DOG(Filter):
 
     #parameter
     para = {'sigma':0}
-    view = [(float, (0,30), 1,  'sigma', 'sigma', 'pix')]
+    view = [(float,'sigma',  (0,30), 1,  'sigma', 'pix')]
 
     #process
     def run(self, ips, snap, img, para = None):
@@ -69,7 +69,7 @@ class Predict(Filter):
     title = 'Predict Surface'
     note = ['8-bit', 'auto_snap',  'preview']
     mode_list=['msk','line','line on ori']
-    view = [(list, mode_list, str, 'mode', 'mode', '')]
+    view = [(list,'mode', mode_list, str, 'mode',  '')]
     para = {'mode':mode_list[0]}
 
     def load(self, ips):
@@ -104,9 +104,9 @@ class Eliminate(Simple):
             'amp_y':60,
             'mode':modelist[3]
             }
-    view = [(int, (0,10), 0, 'amp_x', 'amp_x', ''),
-            (int, (0,80), 0, 'amp_y', 'amp_y', ''),
-            (list, modelist, str, 'mode', 'mode', '')
+    view = [(int, 'amp_x',(0,10), 0, 'amp_x',  ''),
+            (int, 'amp_y',(0,80), 0, 'amp_y',  ''),
+            (list, 'mode',modelist, str, 'mode',  '')
             ]
     #process
     def mathc_img(self,image,template,mode):
