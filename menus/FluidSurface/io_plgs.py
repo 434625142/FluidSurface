@@ -23,8 +23,8 @@ class Writer(Simple):
 	para = {'path':'','fps':24, 'down':1}
 	#para = {'path':'./','name':'','format':'png'}
 
-	view = [(int, (1,120), 0, 'frame', 'fps', '/s'),
-			(int, (1,10), 0, 'down sample', 'down', '')]
+	view = [(int, 'fps', (1,120), 0, 'frame', '/s'),
+			(int, 'down', (1,10), 0, 'down sample', 'down', '')]
 
 	def show(self):
 		self.para['name'] = self.ips.title
@@ -52,16 +52,16 @@ class Reader(Free):
 		filt = '|'.join(['%s files (*.%s)|*.%s'%(i.upper(),i,i) for i in (
 			'wmv', 'avi', 'mov')])
 		rst = IPy.getpath('Import Video', filt, 'open', self.para)
-		if rst!=wx.ID_OK:return rst
+		if not rst :return rst
 
 		videoCapture = cv2.VideoCapture(self.para['path'])
 		nfs = int(videoCapture.get(cv2.CAP_PROP_FRAME_COUNT))
 		videoCapture.release()
 		self.para['end'] = nfs-1
-		self.view = [(str, 'Title','title',''), 
-					 (int, (0, nfs-1), 0, 'Start', 'start', '0~{}'.format(nfs)),
-					 (int, (0, nfs-1), 0, 'End', 'end', '0~{}'.format(nfs)),
-					 (bool, 'convert to gray', 'gray')]
+		self.view = [(str, 'title','Title',''), 
+					 (int, 'start', (0, nfs-1), 0, 'Start',  '0~{}'.format(nfs)),
+					 (int, 'end', (0, nfs-1), 0, 'End',  '0~{}'.format(nfs)),
+					 (bool, 'gray', 'convert to gray')]
 		return IPy.get_para('Import sequence', self.view, self.para)
 
 	#process
