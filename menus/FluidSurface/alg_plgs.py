@@ -136,7 +136,9 @@ class Eliminate(Simple):
             x,y=self.mathc_img(imgs[i][sly, slx.start:slx.stop],img_moudle,self.modedict[self.para['mode']])
             temp=imgs[i][self.para['amp_x']+(x-self.para['amp_x']):-self.para['amp_x']+(x-self.para['amp_x']),self.para['amp_y']+(y-self.para['amp_y']):-self.para['amp_y']+(y-self.para['amp_y'])]
             imgs[i][self.para['amp_x']:-self.para['amp_x'],self.para['amp_y']:-self.para['amp_y']]=temp
-            locs.append([x, y])
-        IPy.table('locations', locs, ['X','Y'])
+            locs.append((x, y))
+        # print(locs)
+        # IPy.show_table(pd.DataFrame(locs, ['X','Y']),'locations')
+        IPy.show_table(pd.DataFrame(locs, columns=['X','Y']),'locations')
             
 plgs = [Combine, Dark, '-', Gradient, DOG, Watershed,'-', Predict,Eliminate]
