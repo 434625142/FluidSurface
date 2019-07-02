@@ -24,17 +24,18 @@ class Writer(Simple):
 	#para = {'path':'./','name':'','format':'png'}
 
 	view = [(int, 'fps', (1,120), 0, 'frame', '/s'),
-			(int, 'down', (1,10), 0, 'down sample', 'down', '')]
+			(int, 'down', (1,10), 0, 'down sample', 'down')]
 
 	def show(self):
 		self.para['name'] = self.ips.title
 		rst = IPy.get_para('Save Video', self.view, self.para)
-		if rst!=wx.ID_OK:return rst
+		if not rst:return rst
 		return IPy.getpath('Save Video', '%s files (*.%s)|*.%s'%('WMV','wmv','wmv'), 'save', self.para)
 
 	#process
 	def run(self, ips, imgs, para = None):
 		path = para['path']+'/'+para['name']
+		print(path)
 		shp = imgs[0][::para['down'], ::para['down']].shape[:2]
 		print(para['path'], cv2.VideoWriter_fourcc(*'MJPG'), para['fps'], shp[::-1])
 		writer = cv2.VideoWriter(para['path'], cv2.VideoWriter_fourcc(*'MJPG'), para['fps'], shp[::-1])
